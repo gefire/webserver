@@ -2,7 +2,7 @@
 # Run this to generate all the initial makefiles, etc.
 
 # Exit on error
-set -e
+#set -e
 
 # Exit on pipe fails (if possible)
 ( set -o pipefail 2> /dev/null ) || true
@@ -29,7 +29,8 @@ test -z "$AUTOMAKE" && AUTOMAKE=automake
 test -z "$ACLOCAL" && ACLOCAL=aclocal
 test -z "$AUTOCONF" && AUTOCONF=autoconf
 test -z "$AUTOHEADER" && AUTOHEADER=autoheader
-if [ -x /usr/bin/glibtool ]; then
+
+if hash glibtool 2>&-; then
  test -z "$LIBTOOL" && LIBTOOL=glibtool
  test -z "$LIBTOOLIZE" && LIBTOOLIZE=glibtoolize
 else
@@ -63,9 +64,63 @@ fi
     DIE=1
 }
 
+echo -n "Checking for python2 binary ..."
+	
+hash python2 2>&- || {
+
+	echo " NOT found."
+
+	PYTHON2EXISTS=false
+	
+	for python2 in python2.7 python2.6 python2.5 python2.4; do
+		echo -n "  Checking for $python2 ..."
+		hash $python2 2>&-
+		STATUS=$?
+
+		if [ $STATUS -eq 0 ]
+		then
+			echo " found. :)"
+			PYTHON2EXISTS=true
+			PYTHON2BIN=$(which $python2)
+			
+			prompt=$(echo -n "Create symlink from $PYTHON2BIN to /usr/local/bin/python2? [Yes|no] ")
+			
+			read -p "$prompt" CREATESYMLINK
+			CREATESYMLINK=${CREATESYMLINK:-no}
+
+			if [ "$CREATESYMLINK" = "Yes" ] || [ "$CREATESYMLINK" = "yes" ] || [ "$CREATESYMLINK" = "Y" ] || [ "$CREATESYMLINK" = "y" ]
+			then
+				echo "Symlinking $PYTHON2BIN to /usr/local/bin/python2"
+				ln -s $PYTHON2BIN /usr/local/bin/python2
+			else
+				echo ""
+				echo "Exiting:"
+				echo "  A python2 symlink to a Python 2.x binary (e.g. $PYTHON2BIN) is required to continue."
+				echo "  Please use a Python installation script of your choice that will create the required"
+				echo "  symlink or manually create a symlink in a location accessible from your \$PATH environment"
+				echo "  variable and then rerun this script."
+				DIE=1
+			fi
+			break
+		else
+			echo " NOT found."
+		fi
+	done
+
+	if [ "$PYTHON2EXISTS" = "false" ]
+	then
+		echo "No compatible Python 2.x binary found. Exiting."
+		DIE=1
+	fi
+}
+echo ""
+
 if test "$DIE" -eq 1; then
     exit 1
 fi
+
+# Exit on error
+set -e
 
 # Update the POTFILES.in
 echo "Generating a fresh po/admin/POTFILES.in file.."
@@ -102,7 +157,7 @@ if test -z "$ACLOCAL_FLAGS"; then
 fi
 
 # Libtool
-if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
+if grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null; then
   echo "Running: libtoolize --force --copy..."
   $LIBTOOLIZE --force --copy
 fi
@@ -113,7 +168,7 @@ rm -f aclocal.m4
 $ACLOCAL $ACLOCAL_FLAGS
 
 # Autoheader
-if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
+if grep "^AC_CONFIG_HEADERS" configure.ac >/dev/null; then
   echo "Running: autoheader..."
   $AUTOHEADER
 fi

@@ -5,7 +5,7 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * Copyright (C) 2001-2011 Alvaro Lopez Ortega
+ * Copyright (C) 2001-2014 Alvaro Lopez Ortega
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -33,10 +33,10 @@
 #define WATCH_SLEEP 1000
 
 #define CHECK_ERROR(msg)             \
-	 if (ret != ret_ok) {        \
-	    PRINT_ERROR_S (msg"\n"); \
-	    return ERROR;            \
-	 }
+	if (ret != ret_ok) {        \
+		PRINT_ERROR_S (msg"\n"); \
+		return ERROR;            \
+	}
 
 int
 main (int argc, char *argv[])
@@ -45,7 +45,6 @@ main (int argc, char *argv[])
 	cuint_t                  fds_num;
 	cherokee_fdpoll_t       *fdpoll;
 	cherokee_admin_client_t *client;
-	cherokee_buffer_t        url;
 	cherokee_list_t         *i, *tmp;
 
 	cuint_t                  port;
@@ -69,26 +68,30 @@ main (int argc, char *argv[])
 
 	/* Set the request
 	 */
-	cherokee_buffer_init (&url);
-	cherokee_buffer_add (&url, argv[1], strlen(argv[1]));
+	cherokee_buffer_init (&buf);
+	cherokee_buffer_add (&buf, argv[1], strlen(argv[1]));
 
 	/* Prepare the admin client object
 	 */
-	ret = cherokee_admin_client_prepare (client, fdpoll, &url);
- 	if (ret != ret_ok) {
+	ret = cherokee_admin_client_prepare (client, fdpoll, &buf);
+	if (ret != ret_ok) {
 		PRINT_ERROR_S ("Client prepare failed\n");
+
+		cherokee_buffer_mrproper (&buf);
 		return ERROR;
 	}
 
 	ret = cherokee_admin_client_connect (client);
- 	if (ret != ret_ok) {
+	if (ret != ret_ok) {
 		PRINT_ERROR_S ("Couldn't connect\n");
+
+		cherokee_buffer_mrproper (&buf);
 		return ERROR;
 	}
 
 	/* Process it
 	 */
-	cherokee_buffer_init (&buf);
+	cherokee_buffer_clean (&buf);
 
 	RUN_CLIENT1 (client, fdpoll, cherokee_admin_client_ask_port, &port);
 	CHECK_ERROR ("port");
@@ -115,8 +118,8 @@ main (int argc, char *argv[])
 			cherokee_connection_info_t *conn = CONN_INFO(i);
 
 			printf ("Request: '%s', phase: '%s', rx: '%s', tx: '%s', size: '%s'\n",
-				conn->request.buf, conn->phase.buf, conn->rx.buf,
-				conn->tx.buf, conn->total_size.buf);
+			        conn->request.buf, conn->phase.buf, conn->rx.buf,
+			        conn->tx.buf, conn->total_size.buf);
 		}
 	}
 

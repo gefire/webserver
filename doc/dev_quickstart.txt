@@ -7,19 +7,20 @@ So, you have found things in Cherokee worth improving and feel the
 urge to contribute to the project. But where to start?
 
 The first thing, of course, is setting up a development/testing
-environming for Cherokee.
+environment for Cherokee.
 
 The relevant documents would be those about
 link:basics_requirements.html[software requirements],
-link:basics_download.html[downloading the SVN repository], and the
+link:basics_download.html[downloading the GIT repository], and the
 link:basics_installation_unix.html[quickstart installation notes].
 
 In principle, provided you have the required tools in your system, it
 should be as easy as:
 
 ----
-    svn co svn://svn.cherokee-project.com/cherokee/trunk ~/cherokee_dev
+    git clone --recursive git://github.com/cherokee/webserver.git ~/cherokee
     cd ~/cherokee_dev
+    git submodule update --init #not needed on Git >= 1.6.5
     ./autogen.sh --enable-beta --enable-trace
     make
 ----
@@ -31,7 +32,7 @@ make sure you are not wasting your effort working on something already
 solved.
 
 Joining the
-link:http://lists.octality.com/listinfo/cherokee-dev[development list]
+link:https://groups.google.com/forum/#!forum/cherokee-http-dev[development list]
 and hanging out at the link:irc://irc.freenode.net/cherokee[#cherokee
 IRC channel] are also good ideas.
 

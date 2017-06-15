@@ -63,7 +63,7 @@ provided by the certificate. Since virtual hosts are in use, the CN of
 the first available certificate may or may not match the one specified
 in the early stages of TLS negotiation.
 
-Fortunately this can be overcomed by using SNI (Server Name
+Fortunately this can be overcome by using SNI (Server Name
 Indication), which places the host information in the SSL
 handshake. If the web server is accessed through a web browser that
 supports SNI, things will just work. Every modern web browser does.
@@ -87,6 +87,17 @@ match your domains, you can always add more than one matching criteria
 on that section. An IP/Subnet match plus a simultaneous wildcard match
 is a combination likely to cover every corner-case scenario you are
 presented with.
+
+[[hsts]]
+.Can clients be forced to use HTTPS?
+
+After enabling HTTP Strict Transport Security per Virtual Server, a client
+gets automatically redirected to HTTPS upon connection to HTTP. In principle
+this equals to the match rule "Is TLS/SSL" with an external redirection.
+Additionally HSTS adds the HTTP Header "Strict-Transport-Security" to a
+secure connection which informs the browser that all other content on
+the page must be accessed over HTTPS. The max-age options defines when the
+browser can check HTTP again.
 
 [[ssl-support]]
 .How to enable the SSL support?
@@ -135,7 +146,7 @@ straightforward actions is order to enable it:
     to follow the chain of trust. You can reed more about
     link:#chained-certificates[chained certificates] later on this
     document. You will only have to concatenate the certificate files
-    and put the combined text into a file used for the the
+    and put the combined text into a file used for the
     `Certificate` field. This part is _very important_: you have to
     concatenate your certificates into a single file in order to use
     them in Cherokee. The order in which you concatenate the files is
@@ -145,6 +156,36 @@ straightforward actions is order to enable it:
 -----
 cat public.pem inter_ca_public.pem > chained.pem
 -----
+
+[[advanced]]
+.Advanced options
+
+In order to make SSL more secure, Cherokee offers the following advanced
+options:
+
+  . The `Ciphers` field can be set up to to allow specific cipher suites,
+    making communication with the client bound to stronger ciphers.
+    We made the following the default:
+    `ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:
+     ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:
+     ECDHE-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:
+     DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:
+     DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:
+     DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:RC4-SHA:
+     AES256-GCM-SHA384:AES256-SHA256:CAMELLIA256-SHA:
+     ECDHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES128-SHA256:
+     AES128-SHA:CAMELLIA128-SHA`
+
+  . In normal SSL communication the clients cipher suite preference
+    is respected. You may understand that if a client prefers a weak
+    cipher but supports a strong cipher, the strong cipher would never
+    be used. We have introduced the option `Server Preference` to
+    enforce our preference on the client and made this as the default.
+    Setting a custom order is possible using the `Ciphers` field.
+
+  . To assist any server administrator, we have made the SSL settings
+    secure by default. Hence, use Server Preference, specified strong
+    ciphers and have disabled SSL compression.
 
 [[ie-workarownd]]
 .I get certificate errors when having more than one. Workarounds?
